@@ -15,4 +15,16 @@ void main() {
 
     expect(find.byType(LiveTab), findsOneWidget);
   });
+
+  testWidgets('programme groupe les emissions par categorie',
+      (tester) async {
+    await tester.pumpWidget(const D3tvApp());
+
+    await tester.tap(find.widgetWithText(NavigationDestination, 'Programmes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Émissions'), findsOneWidget);
+    expect(find.text('Concerts'), findsOneWidget);
+    expect(find.text('Journal du matin'), findsOneWidget);
+  });
 }
