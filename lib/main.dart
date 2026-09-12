@@ -16,10 +16,28 @@ class D3tvApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'D3 TV',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepOrange),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        colorSchemeSeed: Colors.deepOrange,
+        scaffoldBackgroundColor: Colors.black,
+      ),
       home: const HomeShell(),
     );
   }
+}
+
+/// Groups programme/actualité-style JSON items by their "categorie" field,
+/// preserving first-seen order. Shared by HomeTab (horizontal rows) and
+/// ProgramTab (vertical list) so the grouping logic lives in one place.
+Map<String, List<Map<String, dynamic>>> _groupByCategorie(
+    List<dynamic> raw) {
+  final map = <String, List<Map<String, dynamic>>>{};
+  for (final r in raw) {
+    final item = r as Map<String, dynamic>;
+    (map[item['categorie'] as String] ??= []).add(item);
+  }
+  return map;
 }
 
 class HomeShell extends StatefulWidget {
@@ -29,23 +47,33 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _Tab {
-  final String label;
-  final IconData icon;
-  final Widget child;
-  const _Tab(this.label, this.icon, this.child);
-}
-
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _tabs = [
-    _Tab('Accueil', Icons.home, HomeTab()),
-    _Tab('Direct', Icons.live_tv, LiveTab()),
-    _Tab('Actualités', Icons.article, ActualitesTab()),
-    _Tab('Programmes', Icons.calendar_month, ProgramTab()),
-    _Tab('À propos', Icons.info, AboutTab()),
+  static const _labels = ['Accueil', 'Direct', 'Actualités', 'Programmes'];
+
+  static const _destinations = [
+    NavigationDestination(icon: Icon(Icons.home), label: 'Accueil'),
+    NavigationDestination(icon: Icon(Icons.live_tv), label: 'Direct'),
+    NavigationDestination(icon: Icon(Icons.article), label: 'Actualités'),
+    NavigationDestination(
+        icon: Icon(Icons.calendar_month), label: 'Programmes'),
   ];
+
+  void _goTo(int i) => setState(() => _index = i);
+
+  Widget _body() {
+    switch (_index) {
+      case 0:
+        return HomeTab(onVoirDirect: () => _goTo(1));
+      case 1:
+        return const LiveTab();
+      case 2:
+        return const ActualitesTab();
+      default:
+        return const ProgramTab();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,37 +84,171 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             Image.asset('assets/logo.jpg', height: 32),
             const SizedBox(width: 10),
-            Text(_tabs[_index].label),
+            Text(_labels[_index]),
           ],
         ),
       ),
-      body: _tabs[_index].child,
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Colors.black),
+              child: Image.asset('assets/logo.jpg', height: 60),
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_month),
+              title: const Text('Calendrier des programmes'),
+              onTap: () {
+                Navigator.pop(context);
+                _goTo(3);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('Présentation & contact'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('À propos')),
+                      body: const AboutTab(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      body: _body(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: [
-          for (final t in _tabs)
-            NavigationDestination(icon: Icon(t.icon), label: t.label),
-        ],
+        onDestinationSelected: _goTo,
+        destinations: _destinations,
       ),
     );
   }
 }
 
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+  final VoidCallback onVoirDirect;
+  const HomeTab({super.key, required this.onVoirDirect});
+
+  Future<List<dynamic>> _load() async {
+    final raw = await rootBundle.loadString('assets/programme.json');
+    return jsonDecode(raw) as List<dynamic>;
+  }
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/logo.jpg', width: 160),
-            const SizedBox(height: 16),
-            const Text('Bienvenue sur D3 TV'),
-          ],
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Container(
+          width: double.infinity,
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          child: Column(
+            children: [
+              Image.asset('assets/logo.jpg', width: 140),
+              const SizedBox(height: 12),
+              const Text(
+                'La chaîne malienne du cœur',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: onVoirDirect,
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Voir le Direct'),
+              ),
+            ],
+          ),
         ),
-      );
+        FutureBuilder<List<dynamic>>(
+          future: _load(),
+          builder: (context, snap) {
+            if (!snap.hasData) {
+              return const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final grouped = _groupByCategorie(snap.data!);
+            return Column(
+              children: [
+                for (final entry in grouped.entries)
+                  _CategoryRow(title: entry.key, items: entry.value),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryRow extends StatelessWidget {
+  final String title;
+  final List<Map<String, dynamic>> items;
+  const _CategoryRow({required this.title, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final item = items[i];
+                return Container(
+                  width: 160,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item['titre'] as String,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        item['horaire'] as String,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class AboutTab extends StatelessWidget {
@@ -178,15 +340,10 @@ class ProgramTab extends StatelessWidget {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        // Group by "categorie", preserving first-seen order (site's own sections).
-        final byCategorie = <String, List<Map<String, dynamic>>>{};
-        for (final raw in snap.data!) {
-          final item = raw as Map<String, dynamic>;
-          (byCategorie[item['categorie'] as String] ??= []).add(item);
-        }
+        final grouped = _groupByCategorie(snap.data!);
         return ListView(
           children: [
-            for (final entry in byCategorie.entries) ...[
+            for (final entry in grouped.entries) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Text(
