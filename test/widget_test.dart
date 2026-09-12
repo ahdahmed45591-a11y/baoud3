@@ -7,7 +7,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(const D3tvApp());
 
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
     expect(find.text('Bienvenue sur D3 TV'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(NavigationDestination, 'Direct'));

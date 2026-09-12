@@ -42,7 +42,8 @@ class _HomeShellState extends State<HomeShell> {
   static const _tabs = [
     _Tab('Accueil', Icons.home, HomeTab()),
     _Tab('Direct', Icons.live_tv, LiveTab()),
-    _Tab('Programme', Icons.calendar_month, ProgramTab()),
+    _Tab('Actualités', Icons.article, ActualitesTab()),
+    _Tab('Programmes', Icons.calendar_month, ProgramTab()),
     _Tab('À propos', Icons.info, AboutTab()),
   ];
 
@@ -95,9 +96,22 @@ class AboutTab extends StatelessWidget {
   Widget build(BuildContext context) => const Center(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Text(
-            'D3TV est une chaîne de télévision malienne basée à Bamako.',
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'D3TV est une chaîne de télévision malienne basée à Bamako, '
+                'dédiée aux cultures et langues du Mali (Bambara, Peulh...).',
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              Text('contact@d3tv.net', textAlign: TextAlign.center),
+              SizedBox(height: 4),
+              Text(
+                'Facebook · Instagram · TikTok · YouTube',
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
@@ -164,6 +178,52 @@ class ProgramTab extends StatelessWidget {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+        // Group by "categorie", preserving first-seen order (site's own sections).
+        final byCategorie = <String, List<Map<String, dynamic>>>{};
+        for (final raw in snap.data!) {
+          final item = raw as Map<String, dynamic>;
+          (byCategorie[item['categorie'] as String] ??= []).add(item);
+        }
+        return ListView(
+          children: [
+            for (final entry in byCategorie.entries) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  entry.key,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              for (final item in entry.value)
+                ListTile(
+                  title: Text(item['titre'] as String),
+                  subtitle: Text(item['horaire'] as String),
+                ),
+              const Divider(height: 1),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class ActualitesTab extends StatelessWidget {
+  const ActualitesTab({super.key});
+
+  Future<List<dynamic>> _load() async {
+    final raw = await rootBundle.loadString('assets/actualites.json');
+    return jsonDecode(raw) as List<dynamic>;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<dynamic>>(
+      future: _load(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final items = snap.data!;
         return ListView.separated(
           itemCount: items.length,
@@ -172,7 +232,7 @@ class ProgramTab extends StatelessWidget {
             final item = items[i] as Map<String, dynamic>;
             return ListTile(
               title: Text(item['titre'] as String),
-              subtitle: Text(item['horaire'] as String),
+              subtitle: Text('${item['categorie']} · ${item['date']}'),
             );
           },
         );
