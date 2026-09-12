@@ -15,7 +15,7 @@ class D3tvApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'D3TV',
+      title: 'D3 TV',
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepOrange),
       home: const HomeShell(),
     );
@@ -49,7 +49,16 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_tabs[_index].label)),
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/logo.jpg', height: 32),
+            const SizedBox(width: 10),
+            Text(_tabs[_index].label),
+          ],
+        ),
+      ),
       body: _tabs[_index].child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -67,8 +76,16 @@ class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Bienvenue sur D3TV'));
+  Widget build(BuildContext context) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/logo.jpg', width: 160),
+            const SizedBox(height: 16),
+            const Text('Bienvenue sur D3 TV'),
+          ],
+        ),
+      );
 }
 
 class AboutTab extends StatelessWidget {

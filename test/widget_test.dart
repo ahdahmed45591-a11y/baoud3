@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(const D3tvApp());
 
     expect(find.byType(NavigationDestination), findsNWidgets(4));
-    expect(find.text('Bienvenue sur D3TV'), findsOneWidget);
+    expect(find.text('Bienvenue sur D3 TV'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(NavigationDestination, 'Direct'));
     await tester.pump();
