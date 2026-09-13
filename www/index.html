@@ -536,6 +536,7 @@
         document.querySelector('#pane-gate .gate-title').textContent = 'Connecté avec ' + name;
       } catch (e) {
         console.error('Google sign-in error', e);
+        alert('Erreur de connexion Google : ' + (e && e.message ? e.message : JSON.stringify(e)));
       }
     } else {
       alert("La connexion Google n'est disponible que dans l'application mobile.");
