@@ -1,0 +1,8 @@
+{
+  "appId": "net.d3tv.app",
+  "appName": "D3TV",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#000000"
+  }
+}
