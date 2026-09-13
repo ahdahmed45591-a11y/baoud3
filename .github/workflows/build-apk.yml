@@ -21,7 +21,17 @@ jobs:
           java-version: 21
 
       - run: npm install
+
+      - name: Use fixed debug keystore (empreinte SHA-1 stable)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
       - run: npx cap add android
+
+      - name: Add Firebase config
+        run: cp google-services.json android/app/google-services.json
+
       - run: npx cap sync android
       - run: npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#000000'
 

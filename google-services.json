@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "699945533173",
+    "project_id": "baoud3-f5df8",
+    "storage_bucket": "baoud3-f5df8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699945533173:android:d79dd5136d6640c2e2cfbc",
+        "android_client_info": {
+          "package_name": "net.d3tv.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "699945533173-o2430makcnitjlppocot9euse2absrga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.d3tv.app",
+            "certificate_hash": "ebe2a6e66fe1528074ee6813ee0e56ecd07b905c"
+          }
+        },
+        {
+          "client_id": "699945533173-8h47qs19r5u0ggg6iff6pcchibiglel2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhGuGFd3aggoB1EKZr2azkjH4T1Fg6U24"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "699945533173-8h47qs19r5u0ggg6iff6pcchibiglel2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
